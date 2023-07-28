@@ -158,16 +158,8 @@ module.exports = {
   },
   login: (req, res) => {
     const body = req.body;
-    const query = req.query;
 
-    if (!query.type) {
-      return res.status(404).json({
-        success: 0,
-        message: 'Type was lost',
-      });
-    }
-
-    if (query.type === 'email') {
+    if (body.email) {
       usersModel.getByEmail(body, (error, results) => {
         if (error) {
           console.log(error);
@@ -203,7 +195,7 @@ module.exports = {
           });
         }
       });
-    } else if (query.type === 'username') {
+    } else if (body.username) {
       usersModel.getByUsername(body, (error, results) => {
         if (error) {
           console.log(error);
@@ -240,9 +232,9 @@ module.exports = {
         }
       });
     } else {
-      return res.json({
+      return res.status(500).json({
         success: 0,
-        message: 'login type not found',
+        message: 'username or email not found',
       });
     }
   },
