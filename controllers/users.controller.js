@@ -158,6 +158,7 @@ module.exports = {
   },
   login: (req, res) => {
     const body = req.body;
+    const expireMilisecond = 60 * 60 * 1000;
 
     if (body.email) {
       usersModel.getByEmail(body, (error, results) => {
@@ -181,12 +182,13 @@ module.exports = {
           const jsontoken = sign({ id: resultData.id }, process.env.SECRET_KEY, {
             algorithm: 'HS256',
             allowInsecureKeySizes: true,
-            expiresIn: '1h',
+            expiresIn: expireMilisecond,
           });
           return res.json({
             success: 1,
             message: 'login successfully',
-            token: jsontoken,
+            accessToken: jsontoken,
+            expiredAt: new Date().getTime() + expireMilisecond,
           });
         } else {
           return res.json({
