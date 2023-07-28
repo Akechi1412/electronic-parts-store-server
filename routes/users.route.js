@@ -12,7 +12,7 @@ const { verifyToken, isAdmin } = require('../middlewares/auth');
 const { checkDuplicateUsernameOrEmail } = require('../middlewares/verifySignup');
 
 router.post('/', checkDuplicateUsernameOrEmail, createUser);
-router.post('/profile', verifyToken, getUserProfile);
+router.get('/profile', verifyToken, getUserProfile);
 router.get('/', getUsers);
 router.get('/:id', getUserById);
 router.patch('/:id', updateUser);
