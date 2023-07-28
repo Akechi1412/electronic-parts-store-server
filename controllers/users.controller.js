@@ -219,17 +219,18 @@ module.exports = {
           const jsontoken = sign({ id: resultData.id }, process.env.SECRET_KEY, {
             algorithm: 'HS256',
             allowInsecureKeySizes: true,
-            expiresIn: '1h',
+            expiresIn: expireMilisecond,
           });
           return res.json({
             success: 1,
             message: 'login successfully',
-            token: jsontoken,
+            accessToken: jsontoken,
+            expiredAt: new Date().getTime() + expireMilisecond,
           });
         } else {
           return res.json({
             success: 0,
-            message: 'Invalid email or passowrd',
+            message: 'Invalid username or passowrd',
           });
         }
       });
