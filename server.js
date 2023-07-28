@@ -7,11 +7,11 @@ const PORT = process.env.PORT || 8080;
 // const categoriesRouter = require('./routes/categories.route');
 const usersRouter = require('./routes/users.route');
 
-// const corsOptions = {
-//   origin: 'http://localhost:3000',
-// };
+const corsOptions = {
+  origin: 'http://localhost:3000',
+};
 
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
 // parse requests of content-type - application json
 app.use(express.json());
