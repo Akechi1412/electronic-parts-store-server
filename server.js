@@ -6,9 +6,10 @@ const cors = require('cors');
 const PORT = process.env.PORT || 8080;
 // const categoriesRouter = require('./routes/categories.route');
 const usersRouter = require('./routes/users.route');
+const categoriesRouter = require('./routes/categories.route');
 
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://electronic-parts-store-server.onrender.com'],
+  origin: ['http://localhost:3000'],
 };
 
 app.use(cors(corsOptions));
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/users', usersRouter);
+app.use('/api/categories', categoriesRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

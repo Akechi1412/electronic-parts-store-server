@@ -1,56 +1,77 @@
 require('dotenv').config();
 const { verify } = require('jsonwebtoken');
+const { promisify } = require('util');
 const usersModel = require('../models/users.model');
+const verifyAsync = promisify(verify);
 
-module.exports = {
-  verifyToken: (req, res, next) => {
-    const secretKey = process.env.SECRET_KEY;
-    let token = req.get('authorization');
+const verifyAccessToken = async (req, res, next) => {
+  const accessKey = process.env.ACCESS_SECRET_KEY;
+  let token = req.get('authorization');
 
-    if (!token) {
-      return res.status(403).json({
+  if (!token) {
+    return res.status(401).json({
+      success: 0,
+      message: 'No token provided!',
+    });
+  }
+
+  token = token.slice(7);
+  try {
+    const decoded = await verifyAsync(token, accessKey);
+    req.userId = decoded.id;
+    next();
+  } catch (error) {
+    console.log(error.message);
+    return res.status(401).json({
+      success: 0,
+      message: 'Unauthorized!',
+    });
+  }
+};
+const isAdmin = async (req, res, next) => {
+  const params = { id: req.userId };
+  try {
+    const results = await usersModel.getById(params);
+    const isAdmin = results[0]?.admin;
+    if (!isAdmin) {
+      res.status(403).json({
         success: 0,
-        message: 'No token provided!',
+        message: 'Require Admin Role!',
       });
     }
-
-    token = token.slice(7);
-    verify(token, secretKey, (error, decoded) => {
-      if (error) {
-        return res.status(401).send({
-          success: 0,
-          message: 'Unauthorized!',
-        });
-      }
-      console.log(decoded);
-      req.userId = decoded.id;
-      next();
+    next();
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
     });
-  },
-  isAdmin: (req, res, next) => {
-    const params = { id: req.userId };
-    usersModel.getById(params, (error, results) => {
-      if (error) {
-        console.log(error);
-        return res.status(500).json({
-          success: 0,
-          message: 'Database error',
-        });
-      }
-      if (!results) {
-        return res.status(404).json({
-          success: 0,
-          message: 'User not found',
-        });
-      }
-      const isAdmin = results[0]?.admin;
-      if (!isAdmin) {
-        res.status(403).json({
-          success: 0,
-          message: 'Require Admin Role!',
-        });
-      }
-      next();
-    });
-  },
+  }
 };
+
+const verifyResetPasswordToken = async (req, res, next) => {
+  const resetPasswordKey = process.env.RESET_PASSWORD_TOKEN_KEY;
+  let token = req.get('authorization');
+
+  if (!token) {
+    return res.status(401).json({
+      success: 0,
+      message: 'No token provided!',
+    });
+  }
+
+  token = token.slice(7);
+  try {
+    const decoded = await verifyAsync(token, resetPasswordKey);
+    req.email = decoded.email;
+  } catch (error) {
+    console.log(error.message);
+    return res.status(401).json({
+      success: 0,
+      message: 'Unauthorized!',
+    });
+  }
+  next();
+};
+
+module.exports = { verifyAccessToken, isAdmin, verifyResetPasswordToken };

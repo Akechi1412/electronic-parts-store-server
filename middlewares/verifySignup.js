@@ -1,39 +1,41 @@
-const users = require('../models/users.model');
 const usersModel = require('../models/users.model');
 
-module.exports = {
-  checkDuplicateUsernameOrEmail: (req, res, next) => {
-    const body = req.body;
-    usersModel.checkExistsByEmail(body, (error, results) => {
-      if (error) {
-        console.log(error);
-        return res.status(500).json({
-          success: 0,
-          message: 'Database Error',
-        });
-      }
-      if (results[0].output) {
-        return res.status(400).json({
-          success: 0,
-          message: 'Username is already in use!',
-        });
-      }
+const checkDuplicateUsernameOrEmail = async (req, res, next) => {
+  const body = req.body;
+
+  try {
+    const exists = await usersModel.checkExistsByUsername(body);
+    if (exists) {
+      return res.status(400).json({
+        success: 0,
+        message: 'Username is already in use!',
+      });
+    }
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
     });
-    usersModel.checkExistsByUsername(body, (error, results) => {
-      if (error) {
-        console.log(error);
-        return res.status(500).json({
-          success: 0,
-          message: 'Database Error',
-        });
-      }
-      if (results[0].output) {
-        return res.status(400).json({
-          success: 0,
-          message: 'Username is already in use!',
-        });
-      }
+  }
+
+  try {
+    const exists = await usersModel.checkExistsByEmail(body);
+    if (exists) {
+      return res.status(400).json({
+        success: 0,
+        message: 'Email is already in use!',
+      });
+    }
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
     });
-    next();
-  },
+  }
+
+  next();
 };
+
+module.exports = { checkDuplicateUsernameOrEmail };

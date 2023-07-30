@@ -1,15 +1,17 @@
-const express = require('express');
-const router = express.Router();
-const { getMultiple } = require('../models/categories.model');
+const {
+  createCategory,
+  getCategories,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+} = require('../controllers/categories.controller');
+const router = require('express').Router();
+const { verifyAccessToken, isAdmin } = require('../middlewares/auth');
 
-router.get('/', async function (req, res, next) {
-  try {
-    const { page, limit, name } = req.query;
-    res.json(await getMultiple(page, limit, name));
-  } catch (error) {
-    console.error(`Error while getting categories `, error.message);
-    next(error);
-  }
-});
+router.post('/', verifyAccessToken, isAdmin, createCategory);
+router.get('/', getCategories);
+router.get('/:id', getCategoryById);
+router.patch('/:id', verifyAccessToken, isAdmin, updateCategory);
+router.delete('/:id', verifyAccessToken, isAdmin, deleteCategory);
 
 module.exports = router;

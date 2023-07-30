@@ -1,111 +1,264 @@
-const { query } = require('express');
 const { pool } = require('./db');
+const { promisify } = require('util');
+const { getOffset } = require('../helper');
+const config = require('../config');
+
+const queryAsync = promisify(pool.query).bind(pool);
 
 const users = {
-  create: (data, callback) => {
-    pool.query(
-      `INSERT INTO user(email, username, password, provider_id, provider, admin)
-              VALUES(?,?,?,?,?,?)`,
-      [data.email, data.username, data.password, data.provider_id, data.provider, data.admin],
-      (error, results, fields) => {
-        if (error) {
-          return callback(error);
-        }
-        return callback(null, results);
-      }
-    );
+  create: async (data) => {
+    try {
+      const results = await queryAsync(
+        `INSERT INTO user(email, verified_email, username, password, phone, admin, created_at, updated_at)
+          VALUES(?,?,?,?,?,?,?,?)`,
+        [
+          data.email,
+          data.verified_email,
+          data.username,
+          data.password,
+          data.phone,
+          data.admin,
+          data.created_at,
+          data.updated_at,
+        ]
+      );
+      return results;
+    } catch (error) {
+      throw error;
+    }
   },
-  getMultiple: (callback) => {
-    pool.query(`SELECT * FROM user`, [], (error, results, fields) => {
-      if (error) {
-        return callback(error);
-      }
-      return callback(null, results);
-    });
+  createWithoutAdmin: async (data) => {
+    try {
+      const results = await queryAsync(
+        `INSERT INTO user(emai, username, password, phone, provider, provider_id, created_at, updated_at)
+          VALUES(?,?,?,?,?,?,?,?)`,
+        [
+          data.email,
+          data.username,
+          data.password,
+          data.phone,
+          data.provider,
+          data.provider_id,
+          data.created_at,
+          data.updated_at,
+        ]
+      );
+      return results;
+    } catch (error) {
+      throw error;
+    }
   },
-  getById: (params, callback) => {
-    pool.query(`SELECT * FROM user WHERE id = ?`, [params.id], (error, results, fields) => {
-      if (error) {
-        return callback(error);
-      }
-      return callback(null, results);
-    });
+  getAll: async () => {
+    try {
+      const results = await queryAsync(`SELECT * FROM user`);
+      return results;
+    } catch (error) {
+      throw error;
+    }
   },
-  getByEmail: (data, callback) => {
-    pool.query(`SELECT * from user WHERE email = ?`, [data.email], (error, results, fields) => {
-      if (error) {
-        return callback(error);
+  getMultiple: async (query) => {
+    try {
+      const { page = 1, limit = config.limit, ...filter } = query;
+
+      const offset = getOffset(page, limit);
+
+      let filterQuery = '';
+      const filterKeys = Object.keys(filter);
+      if (filterKeys.length > 0) {
+        const conditions = filterKeys.map((key) => {
+          if (key.endsWith('_like')) {
+            const fieldName = key.substring(0, key.length - 5);
+            return `${fieldName} LIKE '%${filter[key]}%'`;
+          } else {
+            return `${key}='${filter[key]}'`;
+          }
+        });
+        filterQuery = `WHERE ${conditions.join(' AND ')}`;
       }
-      return callback(null, results);
-    });
+
+      const dataQuery = `SELECT * FROM user ${filterQuery} LIMIT ? OFFSET ?`;
+      const dataValues = [limit, offset];
+      const results = await queryAsync(dataQuery, dataValues);
+
+      const countQuery = `SELECT COUNT(*) AS totalRows FROM user ${filterQuery}`;
+      const countResult = await queryAsync(countQuery);
+      const totalRows = countResult[0].totalRows;
+      const totalPages = Math.ceil(totalRows / limit);
+
+      return {
+        data: results,
+        pagination: {
+          page,
+          limit,
+          totalRows,
+          totalPages,
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
   },
-  getByUsername: (data, callback) => {
-    pool.query(
-      `SELECT * from user WHERE username = ?`,
-      [data.username],
-      (error, results, fields) => {
-        if (error) {
-          return callback(error);
-        }
-        return callback(null, results);
-      }
-    );
+  getById: async (params) => {
+    try {
+      const results = await queryAsync(`SELECT * FROM user WHERE id = ?`, [params.id]);
+      return results;
+    } catch (error) {
+      throw error;
+    }
   },
-  update: (data, params, callback) => {
-    pool.query(
-      `UPDATE user SET email=?, phone=?, fullname=?, username=?, password=?, avatar=? WHERE id=?`,
-      [data.email, data.phone, data.fullname, data.username, data.password, data.avatar, params.id],
-      (error, results, fields) => {
-        if (error) {
-          return callback(error);
-        }
-        return callback(null, results);
-      }
-    );
+  getByEmail: async (data) => {
+    try {
+      const results = await queryAsync(`SELECT * FROM user WHERE email = ?`, [data.email]);
+      return results;
+    } catch (error) {
+      throw error;
+    }
   },
-  updataPassword: (data, params, callback) => {
-    pool.query(
-      `UPDATE user SET password=? WHERE id=?`,
-      [data.password, params.id],
-      (error, results, fields) => {
-        if (error) {
-          return callback(error);
-        }
-        return callback(null, results);
-      }
-    );
+  getByUsername: async (data) => {
+    try {
+      const results = await queryAsync(`SELECT * FROM user WHERE username = ?`, [data.username]);
+      return results;
+    } catch (error) {
+      throw error;
+    }
   },
-  delete: (params, callback) => {
-    pool.query(`DELETE FROM user WHERE id = ?`, [params.id], (error, results, fields) => {
-      if (error) {
-        return callback(error);
+  update: async (data, params) => {
+    try {
+      let updateFields = [];
+      let updateValues = [];
+
+      if (data.email !== undefined) {
+        updateFields.push('email=?');
+        updateValues.push(data.email);
       }
-      return callback(null, results);
-    });
+      if (data.phone !== undefined) {
+        updateFields.push('phone=?');
+        updateValues.push(data.phone);
+      }
+      if (data.fullname !== undefined) {
+        updateFields.push('fullname=?');
+        updateValues.push(data.fullname);
+      }
+      if (data.username !== undefined) {
+        updateFields.push('username=?');
+        updateValues.push(data.username);
+      }
+      if (data.password !== undefined) {
+        updateFields.push('password=?');
+        updateValues.push(data.password);
+      }
+      if (data.updated_at !== undefined) {
+        updateFields.push('updated_at=?');
+        updateValues.push(data.updated_at);
+      }
+      if (data.avatar !== undefined) {
+        updateFields.push('avatar=?');
+        updateValues.push(data.avatar);
+      }
+      if (data.verified_email !== undefined) {
+        updateFields.push('verified_email=?');
+        updateValues.push(data.verified_email);
+      }
+      if (data.admin !== undefined) {
+        updateFields.push('admin=?');
+        updateValues.push(data.admin);
+      }
+
+      if (updateFields.length > 0) {
+        const updateQuery = `UPDATE user SET ${updateFields.join(', ')} WHERE id=?`;
+        const values = [...updateValues, params.id];
+
+        const results = await queryAsync(updateQuery, values);
+        return results;
+      } else {
+        return { affectedRows: 0 };
+      }
+    } catch (error) {
+      throw error;
+    }
   },
-  checkExistsByEmail: (data, callback) => {
-    pool.query(
-      `SELECT EXISTS(SELECT id FROM user WHERE user.email = ?) AS output`,
-      [data.email],
-      (error, results, fields) => {
-        if (error) {
-          return callback(error);
-        }
-        return callback(null, results);
+  updateByEmail: async (data, params) => {
+    try {
+      let updateFields = [];
+      let updateValues = [];
+
+      if (data.email !== undefined) {
+        updateFields.push('email=?');
+        updateValues.push(data.email);
       }
-    );
+      if (data.phone !== undefined) {
+        updateFields.push('phone=?');
+        updateValues.push(data.phone);
+      }
+      if (data.fullname !== undefined) {
+        updateFields.push('fullname=?');
+        updateValues.push(data.fullname);
+      }
+      if (data.username !== undefined) {
+        updateFields.push('username=?');
+        updateValues.push(data.username);
+      }
+      if (data.password !== undefined) {
+        updateFields.push('password=?');
+        updateValues.push(data.password);
+      }
+      if (data.updated_at !== undefined) {
+        updateFields.push('updated_at=?');
+        updateValues.push(data.updated_at);
+      }
+      if (data.avatar !== undefined) {
+        updateFields.push('avatar=?');
+        updateValues.push(data.avatar);
+      }
+      if (data.verified_email !== undefined) {
+        updateFields.push('verified_email=?');
+        updateValues.push(data.verified_email);
+      }
+      if (data.admin !== undefined) {
+        updateFields.push('admin=?');
+        updateValues.push(data.admin);
+      }
+
+      if (updateFields.length > 0) {
+        const updateQuery = `UPDATE user SET ${updateFields.join(', ')} WHERE email=?`;
+        const values = [...updateValues, params.email];
+
+        const results = await queryAsync(updateQuery, values);
+        return results;
+      } else {
+        return { affectedRows: 0 };
+      }
+    } catch (error) {
+      throw error;
+    }
   },
-  checkExistsByUsername: (data, callback) => {
-    pool.query(
-      `SELECT EXISTS(SELECT id FROM user WHERE user.username = ?) AS output`,
-      [data.username],
-      (error, results, fields) => {
-        if (error) {
-          return callback(error);
-        }
-        return callback(null, results);
-      }
-    );
+  delete: async (params) => {
+    try {
+      const results = await queryAsync(`DELETE FROM user WHERE id = ?`, [params.id]);
+      return results;
+    } catch (error) {
+      throw error;
+    }
+  },
+  checkExistsByEmail: async (data) => {
+    try {
+      const query = `SELECT EXISTS(SELECT id FROM user WHERE user.email = ?) AS output`;
+      const results = await queryAsync(query, [data.email]);
+      const exists = results[0].output === 1;
+      return exists;
+    } catch (error) {
+      throw error;
+    }
+  },
+  checkExistsByUsername: async (data) => {
+    try {
+      const query = `SELECT EXISTS(SELECT id FROM user WHERE user.username = ?) AS output`;
+      const results = await queryAsync(query, [data.username]);
+      const exists = results[0].output === 1;
+      return exists;
+    } catch (error) {
+      throw error;
+    }
   },
 };
 
