@@ -1,6 +1,6 @@
 const { pool } = require('./db');
 const { promisify } = require('util');
-const { getOffset } = require('../helper');
+const { getOffset, createFilterQuery } = require('../helper');
 const config = require('../config');
 
 const queryAsync = promisify(pool.query).bind(pool);
@@ -26,11 +26,25 @@ const categories = {
       if (page) {
         const offset = getOffset(page, limit);
 
-        const dataQuery = `SELECT * FROM category ${filterQuery} LIMIT ? OFFSET ?`;
+        const dataQuery = `
+          SELECT
+            category.*,
+            parent_category.name AS parent_name
+          FROM category
+          LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
+          ${filterQuery}
+          LIMIT ? OFFSET ?
+        `;
+
         const dataValues = [limit, offset];
         const results = await queryAsync(dataQuery, dataValues);
 
-        const countQuery = `SELECT COUNT(*) AS totalRows FROM category ${filterQuery}`;
+        const countQuery = `
+          SELECT COUNT(*) AS totalRows
+          FROM category
+          LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
+          ${filterQuery}
+        `;
         const countResult = await queryAsync(countQuery);
         const totalRows = countResult[0].totalRows;
         const totalPages = Math.ceil(totalRows / limit);
@@ -45,7 +59,15 @@ const categories = {
           },
         };
       } else {
-        const dataQuery = `SELECT * FROM category ${filterQuery}`;
+        const dataQuery = `
+          SELECT
+            category.*,
+            parent_category.name AS parent_name
+          FROM category
+          LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
+          ${filterQuery}
+        `;
+
         const results = await queryAsync(dataQuery);
         return results;
       }
