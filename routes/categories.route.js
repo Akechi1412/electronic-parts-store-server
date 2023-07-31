@@ -7,8 +7,9 @@ const {
 } = require('../controllers/categories.controller');
 const router = require('express').Router();
 const { verifyAccessToken, isAdmin } = require('../middlewares/auth');
+const { checkDuplicateCategoryName } = require('../middlewares/verifyCategory');
 
-router.post('/', verifyAccessToken, isAdmin, createCategory);
+router.post('/', verifyAccessToken, isAdmin, checkDuplicateCategoryName, createCategory);
 router.get('/', getCategories);
 router.get('/:id', getCategoryById);
 router.patch('/:id', verifyAccessToken, isAdmin, updateCategory);
