@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { toSlug } = require('../helper');
 const categoriesModel = require('../models/categories.model');
 const moment = require('moment');
 
@@ -7,6 +8,7 @@ const createCategory = async (req, res) => {
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
+  body.slug = toSlug(body.name);
 
   try {
     const results = await categoriesModel.create(body);
@@ -26,46 +28,25 @@ const createCategory = async (req, res) => {
 const getCategories = async (req, res) => {
   const query = req.query;
 
-  if (Object.keys(query).length === 0) {
-    try {
-      const results = await categoriesModel.getAll();
-      results.forEach((result) => {
-        const createdAt = new Date(result.created_at);
-        result.created_at = moment(createdAt).format('YYYY-MM-DD HH:mm:ss');
-        const updatedAt = new Date(result.updated_at);
-        result.updated_at = moment(updatedAt).format('YYYY-MM-DD HH:mm:ss');
-      });
-      return res.status(200).json({
-        success: 1,
-        data: results,
-      });
-    } catch (error) {
-      console.log(error.message);
-      return res.status(500).json({
-        success: 0,
-        message: error.message || 'something was wrong',
-      });
-    }
-  } else {
-    try {
-      const results = await categoriesModel.getMultiple(query);
-      results.data.forEach((result) => {
-        const createdAt = new Date(result.created_at);
-        result.created_at = moment(createdAt).format('YYYY-MM-DD HH:mm:ss');
-        const updatedAt = new Date(result.updated_at);
-        result.updated_at = moment(updatedAt).format('YYYY-MM-DD HH:mm:ss');
-      });
-      return res.status(200).json({
-        success: 1,
-        data: results,
-      });
-    } catch (error) {
-      console.log(error.message);
-      return res.status(500).json({
-        success: 0,
-        message: error.message || 'something was wrong',
-      });
-    }
+  try {
+    const results = await categoriesModel.getMultiple(query);
+    const resultData = results.data || results;
+    resultData.forEach((result) => {
+      const createdAt = new Date(result.created_at);
+      result.created_at = moment(createdAt).format('YYYY-MM-DD HH:mm:ss');
+      const updatedAt = new Date(result.updated_at);
+      result.updated_at = moment(updatedAt).format('YYYY-MM-DD HH:mm:ss');
+    });
+    return res.status(200).json({
+      success: 1,
+      data: results,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
+    });
   }
 };
 

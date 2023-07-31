@@ -58,6 +58,38 @@ function InitOAuth2Client() {
   return myOAuth2Client;
 }
 
+function toSlug(str) {
+  str = str.toLowerCase();
+  str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  str = str.replace(/[đĐ]/g, 'd');
+  str = str.replace(/([^0-9a-z-\s])/g, '');
+  str = str.replace(/(\s+)/g, '-');
+  str = str.replace(/-+/g, '-');
+  str = str.replace(/^-+|-+$/g, '');
+  return str;
+}
+
+function createUsernameFromEmail(email) {
+  const randomString = createRandomString(4);
+  return email.split('@')[0].replace(/[^a-zA-Z]+/g, '') + randomString;
+}
+
+function createFilterQuery(filter) {
+  const filterKeys = Object.keys(filter);
+  if (filterKeys.length > 0) {
+    const conditions = filterKeys.map((key) => {
+      if (key.endsWith('_like')) {
+        const fieldName = key.substring(0, key.length - 5);
+        return `${fieldName} LIKE '%${filter[key]}%'`;
+      } else {
+        return `${key}='${filter[key]}'`;
+      }
+    });
+    return `WHERE ${conditions.join(' AND ')}`;
+  }
+  return '';
+}
+
 module.exports = {
   getOffset,
   emptyOrRows,
@@ -65,5 +97,8 @@ module.exports = {
   generateAccessToken,
   generateResetPasswordToken,
   InitOAuth2Client,
+  toSlug,
+  createUsernameFromEmail,
+  createFilterQuery,
   // generateRefreshToken,
 };

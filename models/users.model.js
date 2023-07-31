@@ -1,6 +1,6 @@
 const { pool } = require('./db');
 const { promisify } = require('util');
-const { getOffset } = require('../helper');
+const { getOffset, createFilterQuery } = require('../helper');
 const config = require('../config');
 
 const queryAsync = promisify(pool.query).bind(pool);
@@ -48,52 +48,37 @@ const users = {
       throw error;
     }
   },
-  getAll: async () => {
-    try {
-      const results = await queryAsync(`SELECT * FROM user`);
-      return results;
-    } catch (error) {
-      throw error;
-    }
-  },
   getMultiple: async (query) => {
     try {
-      const { page = 1, limit = config.limit, ...filter } = query;
+      const { page, limit = config.limit, ...filter } = query;
+      const filterQuery = createFilterQuery(filter);
 
-      const offset = getOffset(page, limit);
+      if (page) {
+        const offset = getOffset(page, limit);
 
-      let filterQuery = '';
-      const filterKeys = Object.keys(filter);
-      if (filterKeys.length > 0) {
-        const conditions = filterKeys.map((key) => {
-          if (key.endsWith('_like')) {
-            const fieldName = key.substring(0, key.length - 5);
-            return `${fieldName} LIKE '%${filter[key]}%'`;
-          } else {
-            return `${key}='${filter[key]}'`;
-          }
-        });
-        filterQuery = `WHERE ${conditions.join(' AND ')}`;
+        const dataQuery = `SELECT * FROM user ${filterQuery} LIMIT ? OFFSET ?`;
+        const dataValues = [limit, offset];
+        const results = await queryAsync(dataQuery, dataValues);
+
+        const countQuery = `SELECT COUNT(*) AS totalRows FROM user ${filterQuery}`;
+        const countResult = await queryAsync(countQuery);
+        const totalRows = countResult[0].totalRows;
+        const totalPages = Math.ceil(totalRows / limit);
+
+        return {
+          data: results,
+          pagination: {
+            page,
+            limit,
+            totalRows,
+            totalPages,
+          },
+        };
+      } else {
+        const dataQuery = `SELECT * FROM user ${filterQuery}`;
+        const results = await queryAsync(dataQuery);
+        return results;
       }
-
-      const dataQuery = `SELECT * FROM user ${filterQuery} LIMIT ? OFFSET ?`;
-      const dataValues = [limit, offset];
-      const results = await queryAsync(dataQuery, dataValues);
-
-      const countQuery = `SELECT COUNT(*) AS totalRows FROM user ${filterQuery}`;
-      const countResult = await queryAsync(countQuery);
-      const totalRows = countResult[0].totalRows;
-      const totalPages = Math.ceil(totalRows / limit);
-
-      return {
-        data: results,
-        pagination: {
-          page,
-          limit,
-          totalRows,
-          totalPages,
-        },
-      };
     } catch (error) {
       throw error;
     }
