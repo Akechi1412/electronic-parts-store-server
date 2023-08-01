@@ -21,7 +21,7 @@ const categories = {
   getMultiple: async (query) => {
     try {
       const { page, limit = config.limit, ...filter } = query;
-      const filterQuery = createFilterQuery(filter);
+      const filterQuery = createFilterQuery(filter, 'category');
 
       if (page) {
         const offset = getOffset(page, limit);

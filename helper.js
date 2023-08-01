@@ -74,15 +74,15 @@ function createUsernameFromEmail(email) {
   return email.split('@')[0].replace(/[^a-zA-Z]+/g, '') + randomString;
 }
 
-function createFilterQuery(filter) {
+function createFilterQuery(filter, tableName) {
   const filterKeys = Object.keys(filter);
   if (filterKeys.length > 0) {
     const conditions = filterKeys.map((key) => {
       if (key.endsWith('_like')) {
         const fieldName = key.substring(0, key.length - 5);
-        return `${fieldName} LIKE '%${filter[key]}%'`;
+        return `${tableName}.${fieldName} LIKE '%${filter[key]}%'`;
       } else {
-        return `${key}='${filter[key]}'`;
+        return `${tableName}.${key}='${filter[key]}'`;
       }
     });
     return `WHERE ${conditions.join(' AND ')}`;

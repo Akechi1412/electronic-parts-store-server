@@ -51,7 +51,7 @@ const users = {
   getMultiple: async (query) => {
     try {
       const { page, limit = config.limit, ...filter } = query;
-      const filterQuery = createFilterQuery(filter);
+      const filterQuery = createFilterQuery(filter, 'user');
 
       if (page) {
         const offset = getOffset(page, limit);
