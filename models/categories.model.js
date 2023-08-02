@@ -93,6 +93,16 @@ const categories = {
       throw error;
     }
   },
+  checkExistsSubcategory: async (params) => {
+    try {
+      const query = `SELECT EXISTS(SELECT id FROM category WHERE category.parent_id = ?) AS output`;
+      const results = await queryAsync(query, [params.id]);
+      const exists = results[0].output === 1;
+      return exists;
+    } catch (error) {
+      throw error;
+    }
+  },
   update: async (data, params) => {
     try {
       let updateFields = [];

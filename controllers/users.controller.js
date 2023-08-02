@@ -120,6 +120,7 @@ const getUserProfile = async (req, res) => {
       email: results[0].email,
       phone: results[0].phone,
       avatar: results[0].avatar,
+      admin: results[0].admin,
     };
     return res.status(200).json({
       success: 1,

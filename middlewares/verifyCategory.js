@@ -22,4 +22,26 @@ const checkDuplicateCategoryName = async (req, res, next) => {
   next();
 };
 
-module.exports = { checkDuplicateCategoryName };
+const checkValidToDelete = async (req, res, next) => {
+  const params = req.params;
+
+  try {
+    const exists = await categoriesModel.checkExistsSubcategory(params);
+    if (exists) {
+      return res.status(400).json({
+        success: 0,
+        message: 'This category has some subcategory',
+      });
+    }
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
+    });
+  }
+
+  next();
+};
+
+module.exports = { checkDuplicateCategoryName, checkValidToDelete };
