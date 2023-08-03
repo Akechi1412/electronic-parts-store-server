@@ -24,7 +24,7 @@ const categories = {
       const filterQuery = createFilterQuery(filter, 'category');
 
       if (page) {
-        const offset = getOffset(page, limit);
+        const offset = getOffset(page, Number(limit));
 
         const dataQuery = `
           SELECT
@@ -36,7 +36,7 @@ const categories = {
           LIMIT ? OFFSET ?
         `;
 
-        const dataValues = [limit, offset];
+        const dataValues = [Number(limit), offset];
         const results = await queryAsync(dataQuery, dataValues);
 
         const countQuery = `

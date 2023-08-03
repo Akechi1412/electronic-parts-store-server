@@ -54,10 +54,10 @@ const users = {
       const filterQuery = createFilterQuery(filter, 'user');
 
       if (page) {
-        const offset = getOffset(page, limit);
+        const offset = getOffset(page, Number(limit));
 
         const dataQuery = `SELECT * FROM user ${filterQuery} LIMIT ? OFFSET ?`;
-        const dataValues = [limit, offset];
+        const dataValues = [Number(limit), offset];
         const results = await queryAsync(dataQuery, dataValues);
 
         const countQuery = `SELECT COUNT(*) AS totalRows FROM user ${filterQuery}`;

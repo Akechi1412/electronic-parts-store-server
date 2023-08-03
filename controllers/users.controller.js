@@ -148,14 +148,6 @@ const updateUser = async (req, res) => {
 
   try {
     const results = await usersModel.update(body, params);
-
-    if (!results[0]) {
-      return res.status(404).json({
-        success: 0,
-        message: 'user not found',
-      });
-    }
-
     return res.status(200).json({
       success: 1,
       data: results,
@@ -174,14 +166,6 @@ const deleteUser = async (req, res) => {
 
   try {
     const results = usersModel.delete(params);
-
-    if (!results[0]) {
-      return res.status(404).json({
-        success: 0,
-        message: 'user not found',
-      });
-    }
-
     return res.status(200).json({
       success: 1,
       data: results,

@@ -90,14 +90,6 @@ const updateCategory = async (req, res) => {
 
   try {
     const results = await categoriesModel.update(body, params);
-
-    if (!results[0]) {
-      return res.status(404).json({
-        success: 0,
-        message: 'category not found',
-      });
-    }
-
     return res.status(200).json({
       success: 1,
       data: results,
@@ -115,15 +107,7 @@ const deleteCategory = async (req, res) => {
   const params = req.params;
 
   try {
-    const results = categoriesModel.delete(params);
-
-    if (!results[0]) {
-      return res.status(404).json({
-        success: 0,
-        message: 'category not found',
-      });
-    }
-
+    const results = await categoriesModel.delete(params);
     return res.status(200).json({
       success: 1,
       data: results,
