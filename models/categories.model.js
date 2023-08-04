@@ -35,12 +35,12 @@ const categories = {
           ${filterQuery}
           LIMIT ? OFFSET ?
         `;
-
+        console.log(dataQuery);
         const dataValues = [Number(limit), offset];
         const results = await queryAsync(dataQuery, dataValues);
 
         const countQuery = `
-          SELECT COUNT(id) AS totalRows
+          SELECT COUNT(category.id) AS totalRows
           FROM category
           LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
           ${filterQuery}

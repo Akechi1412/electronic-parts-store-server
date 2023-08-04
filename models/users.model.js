@@ -62,7 +62,7 @@ const users = {
         const dataValues = [Number(limit), offset];
         const results = await queryAsync(dataQuery, dataValues);
 
-        const countQuery = `SELECT COUNT(id) AS totalRows FROM user ${filterQuery}`;
+        const countQuery = `SELECT COUNT(user.id) AS totalRows FROM user ${filterQuery}`;
         const countResult = await queryAsync(countQuery);
         const totalRows = countResult[0].totalRows;
         const totalPages = Math.ceil(totalRows / limit);
