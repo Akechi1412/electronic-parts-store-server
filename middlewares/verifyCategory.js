@@ -2,9 +2,10 @@ const categoriesModel = require('../models/categories.model');
 
 const checkDuplicateCategoryName = async (req, res, next) => {
   const body = req.body;
+  const params = req.params;
 
   try {
-    const exists = await categoriesModel.checkExistsByName(body);
+    const exists = await categoriesModel.checkExistsByName(body, params);
     if (exists) {
       return res.status(400).json({
         success: 0,

@@ -9,9 +9,10 @@ const users = {
   create: async (data) => {
     try {
       const results = await queryAsync(
-        `INSERT INTO user(email, verified_email, username, password, phone, admin, created_at, updated_at)
-          VALUES(?,?,?,?,?,?,?,?)`,
+        `INSERT INTO user(id, email, verified_email, username, password, phone, admin, created_at, updated_at)
+          VALUES(?,?,?,?,?,?,?,?,?)`,
         [
+          data.id,
           data.email,
           data.verified_email,
           data.username,
@@ -30,9 +31,10 @@ const users = {
   createWithoutAdmin: async (data) => {
     try {
       const results = await queryAsync(
-        `INSERT INTO user(emai, username, password, phone, provider, provider_id, created_at, updated_at)
-          VALUES(?,?,?,?,?,?,?,?)`,
+        `INSERT INTO user(id, emai, username, password, phone, provider, provider_id, created_at, updated_at)
+          VALUES(?,?,?,?,?,?,?,?,?)`,
         [
+          data.id,
           data.email,
           data.username,
           data.password,
@@ -60,7 +62,7 @@ const users = {
         const dataValues = [Number(limit), offset];
         const results = await queryAsync(dataQuery, dataValues);
 
-        const countQuery = `SELECT COUNT(*) AS totalRows FROM user ${filterQuery}`;
+        const countQuery = `SELECT COUNT(id) AS totalRows FROM user ${filterQuery}`;
         const countResult = await queryAsync(countQuery);
         const totalRows = countResult[0].totalRows;
         const totalPages = Math.ceil(totalRows / limit);
@@ -227,8 +229,8 @@ const users = {
   },
   checkExistsByEmail: async (data) => {
     try {
-      const query = `SELECT EXISTS(SELECT id FROM user WHERE user.email = ?) AS output`;
-      const results = await queryAsync(query, [data.email]);
+      const queryString = `SELECT EXISTS(SELECT id FROM user WHERE user.email = ?) AS output`;
+      const results = await queryAsync(queryString, [data.email]);
       const exists = results[0].output === 1;
       return exists;
     } catch (error) {
@@ -237,8 +239,8 @@ const users = {
   },
   checkExistsByUsername: async (data) => {
     try {
-      const query = `SELECT EXISTS(SELECT id FROM user WHERE user.username = ?) AS output`;
-      const results = await queryAsync(query, [data.username]);
+      const queryString = `SELECT EXISTS(SELECT id FROM user WHERE user.username = ?) AS output`;
+      const results = await queryAsync(queryString, [data.username]);
       const exists = results[0].output === 1;
       return exists;
     } catch (error) {

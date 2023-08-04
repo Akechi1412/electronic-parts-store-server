@@ -12,7 +12,7 @@ const { checkDuplicateCategoryName, checkValidToDelete } = require('../middlewar
 router.post('/', verifyAccessToken, isAdmin, checkDuplicateCategoryName, createCategory);
 router.get('/', getCategories);
 router.get('/:id', getCategoryById);
-router.patch('/:id', verifyAccessToken, isAdmin, updateCategory);
+router.patch('/:id', verifyAccessToken, isAdmin, checkDuplicateCategoryName, updateCategory);
 router.delete('/:id', verifyAccessToken, isAdmin, checkValidToDelete, deleteCategory);
 
 module.exports = router;

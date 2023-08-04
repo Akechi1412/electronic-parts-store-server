@@ -40,7 +40,7 @@ const categories = {
         const results = await queryAsync(dataQuery, dataValues);
 
         const countQuery = `
-          SELECT COUNT(*) AS totalRows
+          SELECT COUNT(id) AS totalRows
           FROM category
           LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
           ${filterQuery}
@@ -77,16 +77,30 @@ const categories = {
   },
   getById: async (params) => {
     try {
-      const results = await queryAsync(`SELECT * FROM category WHERE id = ?`, [params.id]);
+      const queryString = `
+        SELECT category.*, parent_category.name AS parent_name
+        FROM category
+        LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
+        WHERE category.id = ?`;
+      const results = await queryAsync(queryString, [params.id]);
       return results;
     } catch (error) {
       throw error;
     }
   },
-  checkExistsByName: async (data) => {
+  checkExistsByName: async (data, params) => {
     try {
-      const query = `SELECT EXISTS(SELECT id FROM category WHERE category.name = ?) AS output`;
-      const results = await queryAsync(query, [data.name]);
+      let queryString = `SELECT EXISTS(SELECT * FROM category WHERE category.name = ?`;
+      const values = [data.name];
+
+      if (params?.id) {
+        queryString += ' AND category.id != ?';
+        values.push(Number(params.id));
+      }
+
+      queryString += ') AS output';
+
+      const results = await queryAsync(queryString, values);
       const exists = results[0].output === 1;
       return exists;
     } catch (error) {
@@ -95,8 +109,8 @@ const categories = {
   },
   checkExistsSubcategory: async (params) => {
     try {
-      const query = `SELECT EXISTS(SELECT id FROM category WHERE category.parent_id = ?) AS output`;
-      const results = await queryAsync(query, [params.id]);
+      const queryString = `SELECT EXISTS(SELECT id FROM category WHERE category.parent_id = ?) AS output`;
+      const results = await queryAsync(queryString, [params.id]);
       const exists = results[0].output === 1;
       return exists;
     } catch (error) {
