@@ -7,12 +7,12 @@ const {
 } = require('../controllers/brands.controller');
 const router = require('express').Router();
 const { verifyAccessToken, isAdmin } = require('../middlewares/auth');
-const { checkDuplicateCategoryName, checkValidToDelete } = require('../middlewares/verifyCategory');
+const { checkDuplicateBrandName } = require('../middlewares/verifyBrand');
 
-router.post('/', verifyAccessToken, isAdmin, checkDuplicateCategoryName, createBrand);
+router.post('/', verifyAccessToken, isAdmin, checkDuplicateBrandName, createBrand);
 router.get('/', getBrands);
 router.get('/:id', getBrandById);
-router.patch('/:id', verifyAccessToken, isAdmin, checkDuplicateCategoryName, updateBrand);
-router.delete('/:id', verifyAccessToken, isAdmin, checkValidToDelete, deleteBrand);
+router.patch('/:id', verifyAccessToken, isAdmin, checkDuplicateBrandName, updateBrand);
+router.delete('/:id', verifyAccessToken, isAdmin, deleteBrand);
 
 module.exports = router;
