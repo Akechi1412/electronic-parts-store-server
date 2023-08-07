@@ -1,22 +1,17 @@
 require('dotenv').config();
 const { toSlug } = require('../helper');
-const productsModel = require('../models/products.model');
-const config = require('../config');
-const { Snowflake } = require('nodejs-snowflake');
+const brandsModel = require('../models/brands.model');
 const moment = require('moment');
 
-const createProduct = async (req, res) => {
+const createBrand = async (req, res) => {
   const body = req.body;
-  const uid = new Snowflake(config.snowFlake);
-  const id = BigInt(uid.getUniqueID());
-  body.id = id.toString();
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
-  body.slug = toSlug(body.name) + `-${id}`;
+  body.slug = toSlug(body.name);
 
   try {
-    const results = await productsModel.create(body);
+    const results = await brandsModel.create(body);
     return res.status(200).json({
       success: 1,
       data: results,
@@ -30,11 +25,11 @@ const createProduct = async (req, res) => {
   }
 };
 
-const getProducts = async (req, res) => {
+const getBrands = async (req, res) => {
   const query = req.query;
 
   try {
-    const results = await productsModel.getMultiple(query);
+    const results = await brandsModel.getMultiple(query);
     const resultData = results.data || results;
     resultData.forEach((result) => {
       const createdAt = new Date(result.created_at);
@@ -55,17 +50,17 @@ const getProducts = async (req, res) => {
   }
 };
 
-const getProductById = async (req, res) => {
+const getBrandById = async (req, res) => {
   const params = req.params;
 
   try {
-    const results = await productsModel.getById(params);
+    const results = await brandsModel.getById(params);
     const result = results[0];
 
     if (!result) {
       return res.status(404).json({
         success: 0,
-        message: 'product not found',
+        message: 'brand not found',
       });
     }
 
@@ -87,17 +82,17 @@ const getProductById = async (req, res) => {
   }
 };
 
-const updateProduct = async (req, res) => {
+const updateBrand = async (req, res) => {
   const body = req.body;
+  if (body.name) {
+    body.slug = toSlug(body.name);
+  }
   const mysqlTimestamp = new Date();
   body.updated_at = mysqlTimestamp;
   const params = req.params;
-  if (body.name) {
-    body.slug = toSlug(body.name) + `-${params.id}`;
-  }
 
   try {
-    const results = await productsModel.update(body, params);
+    const results = await brandsModel.update(body, params);
     return res.status(200).json({
       success: 1,
       data: results,
@@ -111,11 +106,11 @@ const updateProduct = async (req, res) => {
   }
 };
 
-const deleteProduct = async (req, res) => {
+const deleteBrand = async (req, res) => {
   const params = req.params;
 
   try {
-    const results = await productsModel.delete(params);
+    const results = await brandsModel.delete(params);
     return res.status(200).json({
       success: 1,
       data: results,
@@ -129,4 +124,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct };
+module.exports = { createBrand, getBrands, getBrandById, updateBrand, deleteBrand };

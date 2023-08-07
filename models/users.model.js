@@ -1,14 +1,11 @@
 const { pool } = require('./db');
-const { promisify } = require('util');
 const { getOffset, createFilterQuery } = require('../helper');
 const config = require('../config');
-
-const queryAsync = promisify(pool.query).bind(pool);
 
 const users = {
   create: async (data) => {
     try {
-      const results = await queryAsync(
+      const [rows, fields] = await pool.query(
         `INSERT INTO user(id, email, verified_email, username, password, phone, admin, created_at, updated_at)
           VALUES(?,?,?,?,?,?,?,?,?)`,
         [
@@ -23,15 +20,15 @@ const users = {
           data.updated_at,
         ]
       );
-      return results;
+      return rows;
     } catch (error) {
       throw error;
     }
   },
   createWithoutAdmin: async (data) => {
     try {
-      const results = await queryAsync(
-        `INSERT INTO user(id, emai, username, password, phone, provider, provider_id, created_at, updated_at)
+      const [rows, fields] = await pool.query(
+        `INSERT INTO user(id, email, username, password, phone, provider, provider_id, created_at, updated_at)
           VALUES(?,?,?,?,?,?,?,?,?)`,
         [
           data.id,
@@ -45,7 +42,7 @@ const users = {
           data.updated_at,
         ]
       );
-      return results;
+      return rows;
     } catch (error) {
       throw error;
     }
@@ -60,17 +57,17 @@ const users = {
 
         const dataQuery = `SELECT * FROM user ${filterQuery} LIMIT ? OFFSET ?`;
         const dataValues = [Number(limit), offset];
-        const results = await queryAsync(dataQuery, dataValues);
+        const [rows, fields] = await pool.query(dataQuery, dataValues);
 
         const countQuery = `SELECT COUNT(user.id) AS totalRows FROM user ${filterQuery}`;
-        const countResult = await queryAsync(countQuery);
-        const totalRows = countResult[0].totalRows;
+        const [countRows, countFields] = await pool.query(countQuery);
+        const totalRows = countRows[0].totalRows;
         const totalPages = Math.ceil(totalRows / limit);
 
         return {
-          data: results,
+          data: rows,
           pagination: {
-            page,
+            page: Number(page),
             limit,
             totalRows,
             totalPages,
@@ -78,8 +75,8 @@ const users = {
         };
       } else {
         const dataQuery = `SELECT * FROM user ${filterQuery}`;
-        const results = await queryAsync(dataQuery);
-        return results;
+        const [rows, fields] = await pool.query(dataQuery);
+        return rows;
       }
     } catch (error) {
       throw error;
@@ -87,24 +84,26 @@ const users = {
   },
   getById: async (params) => {
     try {
-      const results = await queryAsync(`SELECT * FROM user WHERE id = ?`, [params.id]);
-      return results;
+      const [rows, fields] = await pool.query(`SELECT * FROM user WHERE id = ?`, [params.id]);
+      return rows;
     } catch (error) {
       throw error;
     }
   },
   getByEmail: async (data) => {
     try {
-      const results = await queryAsync(`SELECT * FROM user WHERE email = ?`, [data.email]);
-      return results;
+      const [rows, fields] = await pool.query(`SELECT * FROM user WHERE email = ?`, [data.email]);
+      return rows;
     } catch (error) {
       throw error;
     }
   },
   getByUsername: async (data) => {
     try {
-      const results = await queryAsync(`SELECT * FROM user WHERE username = ?`, [data.username]);
-      return results;
+      const [rows, fields] = await pool.query(`SELECT * FROM user WHERE username = ?`, [
+        data.username,
+      ]);
+      return rows;
     } catch (error) {
       throw error;
     }
@@ -155,8 +154,8 @@ const users = {
         const updateQuery = `UPDATE user SET ${updateFields.join(', ')} WHERE id=?`;
         const values = [...updateValues, params.id];
 
-        const results = await queryAsync(updateQuery, values);
-        return results;
+        const [rows, fields] = await pool.query(updateQuery, values);
+        return rows;
       } else {
         return { affectedRows: 0 };
       }
@@ -210,8 +209,8 @@ const users = {
         const updateQuery = `UPDATE user SET ${updateFields.join(', ')} WHERE email=?`;
         const values = [...updateValues, params.email];
 
-        const results = await queryAsync(updateQuery, values);
-        return results;
+        const [rows, fields] = await pool.query(updateQuery, values);
+        return rows;
       } else {
         return { affectedRows: 0 };
       }
@@ -221,7 +220,7 @@ const users = {
   },
   delete: async (params) => {
     try {
-      const results = await queryAsync(`DELETE FROM user WHERE id = ?`, [params.id]);
+      const results = await pool.query(`DELETE FROM user WHERE id = ?`, [params.id]);
       return results;
     } catch (error) {
       throw error;
@@ -230,8 +229,8 @@ const users = {
   checkExistsByEmail: async (data) => {
     try {
       const queryString = `SELECT EXISTS(SELECT id FROM user WHERE user.email = ?) AS output`;
-      const results = await queryAsync(queryString, [data.email]);
-      const exists = results[0].output === 1;
+      const [rows, fields] = await pool.query(queryString, [data.email]);
+      const exists = rows[0].output === 1;
       return exists;
     } catch (error) {
       throw error;
@@ -240,8 +239,8 @@ const users = {
   checkExistsByUsername: async (data) => {
     try {
       const queryString = `SELECT EXISTS(SELECT id FROM user WHERE user.username = ?) AS output`;
-      const results = await queryAsync(queryString, [data.username]);
-      const exists = results[0].output === 1;
+      const [rows, fields] = await pool.query(queryString, [data.username]);
+      const exists = rows[0].output === 1;
       return exists;
     } catch (error) {
       throw error;

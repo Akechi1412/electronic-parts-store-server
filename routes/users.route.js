@@ -20,7 +20,7 @@ router.get('/', getUsers);
 router.get('/:id', verifyAccessToken, getUserById);
 router.patch('/:id', updateUser);
 router.delete('/:id', deleteUser);
-router.post('/register', register);
+router.post('/register', checkDuplicateUsernameOrEmail, register);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', verifyResetPasswordToken, resetPassword);

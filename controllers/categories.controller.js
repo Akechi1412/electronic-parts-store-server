@@ -84,6 +84,9 @@ const getCategoryById = async (req, res) => {
 
 const updateCategory = async (req, res) => {
   const body = req.body;
+  if (body.name) {
+    body.slug = toSlug(body.name);
+  }
   const mysqlTimestamp = new Date();
   body.updated_at = mysqlTimestamp;
   const params = req.params;

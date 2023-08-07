@@ -1,17 +1,20 @@
 require('dotenv').config();
+const config = require('../config');
 const usersModel = require('../models/users.model');
 const { Snowflake } = require('nodejs-snowflake');
 const { genSalt, hash, compareSync } = require('bcrypt');
 const moment = require('moment');
-const { generateAccessToken, InitOAuth2Client, generateResetPasswordToken } = require('../helper');
+const {
+  generateAccessToken,
+  InitOAuth2Client,
+  generateResetPasswordToken,
+  createUsernameFromEmail,
+} = require('../helper');
 const nodemailer = require('nodemailer');
 
 const createUser = async (req, res) => {
   const body = req.body;
-  const uid = new Snowflake({
-    custom_epoch: Date.now(),
-    instance_id: 1010,
-  });
+  const uid = new Snowflake(config.snowFlake);
   const id = BigInt(uid.getUniqueID());
   body.id = id.toString();
   const mysqlTimestamp = new Date();
@@ -37,10 +40,7 @@ const createUser = async (req, res) => {
 
 const register = async (req, res) => {
   const body = req.body;
-  const uid = new Snowflake({
-    custom_epoch: Date.now(),
-    instance_id: 1010,
-  });
+  const uid = new Snowflake(config.snowFlake);
   const id = BigInt(uid.getUniqueID());
   body.id = id.toString();
   const mysqlTimestamp = new Date();
@@ -200,7 +200,6 @@ const login = async (req, res) => {
     try {
       const results = await usersModel.getByEmail(body);
       const resultData = results[0];
-
       if (!resultData?.password) {
         return res.status(401).json({
           success: 0,

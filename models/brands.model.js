@@ -2,13 +2,13 @@ const { pool } = require('./db');
 const { getOffset, createFilterQuery } = require('../helper');
 const config = require('../config');
 
-const categories = {
+const brands = {
   create: async (data) => {
     try {
       const [rows, fields] = await pool.query(
-        `INSERT INTO category(parent_id, name, slug, thumbnail, created_at, updated_at)
+        `INSERT INTO brand(name, slug, description, logo, created_at, updated_at)
           VALUES(?,?,?,?,?,?)`,
-        [data.parent_id, data.name, data.slug, data.thumbnail, data.created_at, data.updated_at]
+        [data.name, data.slug, data.description, data.logo, data.created_at, data.updated_at]
       );
       return rows;
     } catch (error) {
@@ -18,17 +18,13 @@ const categories = {
   getMultiple: async (query) => {
     try {
       const { page, limit = config.limit, ...filter } = query;
-      const filterQuery = createFilterQuery(filter, 'category');
+      const filterQuery = createFilterQuery(filter, 'brand');
 
       if (page) {
         const offset = getOffset(page, Number(limit));
 
         const dataQuery = `
-          SELECT
-            category.*,
-            parent_category.name AS parent_name
-          FROM category
-          LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
+          SELECT * FROM brand
           ${filterQuery}
           LIMIT ? OFFSET ?
         `;
@@ -36,9 +32,8 @@ const categories = {
         const [rows, fields] = await pool.query(dataQuery, dataValues);
 
         const countQuery = `
-          SELECT COUNT(category.id) AS totalRows
-          FROM category
-          LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
+          SELECT COUNT(brand.id) AS totalRows
+          FROM brand
           ${filterQuery}
         `;
         const [countRows, countFields] = await pool.query(countQuery);
@@ -56,11 +51,7 @@ const categories = {
         };
       } else {
         const dataQuery = `
-          SELECT
-            category.*,
-            parent_category.name AS parent_name
-          FROM category
-          LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
+          SELECT * FROM brand
           ${filterQuery}
         `;
 
@@ -74,10 +65,9 @@ const categories = {
   getById: async (params) => {
     try {
       const queryString = `
-        SELECT category.*, parent_category.name AS parent_name
-        FROM category
-        LEFT JOIN category AS parent_category ON category.parent_id = parent_category.id
-        WHERE category.id = ?`;
+        SELECT brand.*
+        FROM brand
+        WHERE brand.id = ?`;
       const [rows, fields] = await pool.query(queryString, [params.id]);
       return rows;
     } catch (error) {
@@ -86,11 +76,11 @@ const categories = {
   },
   checkExistsByName: async (data, params) => {
     try {
-      let queryString = `SELECT EXISTS(SELECT * FROM category WHERE category.name = ?`;
+      let queryString = `SELECT EXISTS(SELECT * FROM brand WHERE brand.name = ?`;
       const values = [data.name];
 
       if (params?.id) {
-        queryString += ' AND category.id != ?';
+        queryString += ' AND brand.id != ?';
         values.push(Number(params.id));
       }
 
@@ -103,25 +93,11 @@ const categories = {
       throw error;
     }
   },
-  checkExistsSubcategory: async (params) => {
-    try {
-      const queryString = `SELECT EXISTS(SELECT id FROM category WHERE category.parent_id = ?) AS output`;
-      const [rows, fields] = await pool.query(queryString, [params.id]);
-      const exists = rows[0].output === 1;
-      return exists;
-    } catch (error) {
-      throw error;
-    }
-  },
   update: async (data, params) => {
     try {
       let updateFields = [];
       let updateValues = [];
 
-      if (data.parent_id !== undefined) {
-        updateFields.push('parent_id=?');
-        updateValues.push(data.parent_id);
-      }
       if (data.name !== undefined) {
         updateFields.push('name=?');
         updateValues.push(data.name);
@@ -130,9 +106,17 @@ const categories = {
         updateFields.push('slug=?');
         updateValues.push(data.slug);
       }
-      if (data.thumbnail !== undefined) {
-        updateFields.push('thumbnail=?');
-        updateValues.push(data.thumbnail);
+      if (data.logo !== undefined) {
+        updateFields.push('logo=?');
+        updateValues.push(data.logo);
+      }
+      if (data.slug !== undefined) {
+        updateFields.push('slug=?');
+        updateValues.push(data.slug);
+      }
+      if (data.description !== undefined) {
+        updateFields.push('description=?');
+        updateValues.push(data.description);
       }
       if (data.updated_at !== undefined) {
         updateFields.push('updated_at=?');
@@ -140,7 +124,7 @@ const categories = {
       }
 
       if (updateFields.length > 0) {
-        const updateQuery = `UPDATE category SET ${updateFields.join(', ')} WHERE id=?`;
+        const updateQuery = `UPDATE brand SET ${updateFields.join(', ')} WHERE id=?`;
         const values = [...updateValues, params.id];
 
         const [rows, fields] = await pool.query(updateQuery, values);
@@ -154,7 +138,7 @@ const categories = {
   },
   delete: async (params) => {
     try {
-      const [rows, fields] = await pool.query(`DELETE FROM category WHERE id = ?`, [params.id]);
+      const [rows, fields] = await pool.query(`DELETE FROM brand WHERE id = ?`, [params.id]);
       return rows;
     } catch (error) {
       throw error;
@@ -162,4 +146,4 @@ const categories = {
   },
 };
 
-module.exports = categories;
+module.exports = brands;
