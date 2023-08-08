@@ -76,7 +76,7 @@ const getProductById = async (req, res) => {
 
     return res.status(200).json({
       success: 1,
-      data: results,
+      data: result,
     });
   } catch (error) {
     console.log(error.message);

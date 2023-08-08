@@ -138,12 +138,28 @@ const products = {
   },
   getById: async (params) => {
     try {
+      const [specificationRows, specificationFields] = await pool.query(
+        `
+          SELECT name, value 
+          FROM specification WHERE product_id = ?
+        `,
+        [params.id]
+      );
+
+      const [imageRows, imagefields] = await pool.query(
+        `
+          SELECT url, on_top 
+          FROM product_image WHERE product_id = ?
+        `,
+        [params.id]
+      );
+
       const queryString = `
         WITH selected_product AS (
           SELECT * FROM product
           WHERE product.id = ?
         )
-        SELECT  
+        SELECT
         selected_product.*,
         category.name AS category_name,
         brand.name AS brand_name
@@ -152,6 +168,8 @@ const products = {
           LEFT JOIN brand ON selected_product.brand_id = brand.id
       `;
       const [rows, fields] = await pool.query(queryString, [params.id]);
+      rows[0].specification = specificationRows;
+      rows[0].product_image = imageRows;
       return rows;
     } catch (error) {
       throw error;
