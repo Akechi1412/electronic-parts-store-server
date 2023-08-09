@@ -113,6 +113,16 @@ const categories = {
       throw error;
     }
   },
+  checkExistsProduct: async (params) => {
+    try {
+      const queryString = `SELECT EXISTS(SELECT id FROM product WHERE product.category_id = ?) AS output`;
+      const [rows, fields] = await pool.query(queryString, [params.id]);
+      const exists = rows[0].output === 1;
+      return exists;
+    } catch (error) {
+      throw error;
+    }
+  },
   update: async (data, params) => {
     try {
       let updateFields = [];

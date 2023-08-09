@@ -81,8 +81,23 @@ function createFilterQuery(filter, tableName) {
       if (key.endsWith('_like')) {
         const fieldName = key.substring(0, key.length - 5);
         return `${tableName}.${fieldName} LIKE '%${filter[key]}%'`;
+      } else if (key.endsWith('_gt')) {
+        const fieldName = key.substring(0, key.length - 3);
+        return `${tableName}.${fieldName} > '${filter[key]}'`;
+      } else if (key.endsWith('_lt')) {
+        const fieldName = key.substring(0, key.length - 3);
+        return `${tableName}.${fieldName} < '${filter[key]}'`;
+      } else if (key.endsWith('_gte')) {
+        const fieldName = key.substring(0, key.length - 4);
+        return `${tableName}.${fieldName} >= '${filter[key]}'`;
+      } else if (key.endsWith('_lte')) {
+        const fieldName = key.substring(0, key.length - 4);
+        return `${tableName}.${fieldName} <= '${filter[key]}'`;
+      } else if (key.endsWith('_ne')) {
+        const fieldName = key.substring(0, key.length - 3);
+        return `${tableName}.${fieldName} <> '${filter[key]}'`;
       } else {
-        return `${tableName}.${key}='${filter[key]}'`;
+        return `${tableName}.${key} = '${filter[key]}'`;
       }
     });
     return `WHERE ${conditions.join(' AND ')}`;
