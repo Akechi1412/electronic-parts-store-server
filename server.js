@@ -9,6 +9,7 @@ const usersRouter = require('./routes/users.route');
 const categoriesRouter = require('./routes/categories.route');
 const brandsRouter = require('./routes/brands.route');
 const productsRouter = require('./routes/products.route');
+const importRouter = require('./routes/import.route');
 
 const corsOptions = {
   origin: ['http://localhost:3000'],
@@ -26,6 +27,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/brands', brandsRouter);
 app.use('/api/products', productsRouter);
+app.use('/api/import', importRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

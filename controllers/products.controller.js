@@ -8,12 +8,32 @@ const moment = require('moment');
 const createProduct = async (req, res) => {
   const body = req.body;
   const uid = new Snowflake(config.snowFlake);
-  const id = BigInt(uid.getUniqueID());
-  body.id = id.toString();
+  body.id = BigInt(uid.getUniqueID());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
   body.slug = toSlug(body.name) + `-${id}`;
+  if (!body.hidden) {
+    body.hidden = 0;
+  }
+  if (!body.new) {
+    body.new = 0;
+  }
+  if (!body.featured) {
+    body.featured = 0;
+  }
+  if (!body.bestseller) {
+    body.bestseller = 0;
+  }
+  if (!body.freeship) {
+    body.freeship = 0;
+  }
+  if (!body.discount) {
+    body.discount = 0;
+  }
+  if (!body.warranty) {
+    body.warranty = 0;
+  }
 
   try {
     const results = await productsModel.create(body);

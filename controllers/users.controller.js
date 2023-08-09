@@ -15,13 +15,15 @@ const nodemailer = require('nodemailer');
 const createUser = async (req, res) => {
   const body = req.body;
   const uid = new Snowflake(config.snowFlake);
-  const id = BigInt(uid.getUniqueID());
-  body.id = id.toString();
+  body.id = BigInt(uid.getUniqueID());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
   const salt = await genSalt(10);
   body.password = await hash(body.password, salt);
+  if (!body.admin) {
+    body.admin = 0;
+  }
 
   try {
     const results = await usersModel.create(body);
@@ -41,8 +43,7 @@ const createUser = async (req, res) => {
 const register = async (req, res) => {
   const body = req.body;
   const uid = new Snowflake(config.snowFlake);
-  const id = BigInt(uid.getUniqueID());
-  body.id = id.toString();
+  body.id = BigInt(uid.getUniqueID());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
