@@ -1,7 +1,7 @@
 require('dotenv').config();
 const config = require('../config');
 const usersModel = require('../models/users.model');
-const { Snowflake } = require('nodejs-snowflake');
+const { customAlphabet } = require('nanoid');
 const { genSalt, hash, compareSync } = require('bcrypt');
 const moment = require('moment');
 const {
@@ -14,8 +14,8 @@ const nodemailer = require('nodemailer');
 
 const createUser = async (req, res) => {
   const body = req.body;
-  const uid = new Snowflake(config.snowFlake);
-  body.id = BigInt(uid.getUniqueID());
+  const nanoid = customAlphabet(config.idAlphabet, config.idLength);
+  body.id = BigInt(nanoid());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
@@ -42,8 +42,8 @@ const createUser = async (req, res) => {
 
 const register = async (req, res) => {
   const body = req.body;
-  const uid = new Snowflake(config.snowFlake);
-  body.id = BigInt(uid.getUniqueID());
+  const nanoid = customAlphabet(config.idAlphabet, config.idLength);
+  body.id = BigInt(nanoid());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;

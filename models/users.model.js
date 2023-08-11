@@ -220,8 +220,8 @@ const users = {
   },
   delete: async (params) => {
     try {
-      const results = await pool.query(`DELETE FROM user WHERE id = ?`, [params.id]);
-      return results;
+      const [rows, fields] = await pool.query(`DELETE FROM user WHERE id = ?`, [params.id]);
+      return rows;
     } catch (error) {
       throw error;
     }

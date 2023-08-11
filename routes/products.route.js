@@ -4,6 +4,7 @@ const {
   getProductById,
   updateProduct,
   deleteProduct,
+  deleteAllProduct,
 } = require('../controllers/products.controller');
 const router = require('express').Router();
 const { verifyAccessToken, isAdmin } = require('../middlewares/auth');

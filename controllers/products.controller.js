@@ -2,17 +2,17 @@ require('dotenv').config();
 const { toSlug } = require('../helper');
 const productsModel = require('../models/products.model');
 const config = require('../config');
-const { Snowflake } = require('nodejs-snowflake');
+const { customAlphabet } = require('nanoid');
 const moment = require('moment');
 
 const createProduct = async (req, res) => {
   const body = req.body;
-  const uid = new Snowflake(config.snowFlake);
-  body.id = BigInt(uid.getUniqueID());
+  const nanoid = customAlphabet(config.idAlphabet, config.idLength);
+  body.id = BigInt(nanoid());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
-  body.slug = toSlug(body.name) + `-${id}`;
+  body.slug = toSlug(body.name) + `-${body.id}`;
   if (!body.hidden) {
     body.hidden = 0;
   }
@@ -33,6 +33,12 @@ const createProduct = async (req, res) => {
   }
   if (!body.warranty) {
     body.warranty = 0;
+  }
+  if (body.start_at) {
+    body.start_at = new Date(body.start_at);
+  }
+  if (body.end_at) {
+    body.end_at = new Date(body.end_at);
   }
 
   try {
@@ -87,6 +93,15 @@ const getProductById = async (req, res) => {
         success: 0,
         message: 'product not found',
       });
+    }
+
+    if (result.start_at) {
+      const starAt = new Date(result.created_at);
+      result.start_at = moment(starAt).format('YYYY-MM-DD HH:mm:ss');
+    }
+    if (result.end_at) {
+      const endAt = new Date(result.updated_at);
+      result.end_at = moment(endAt).format('YYYY-MM-DD HH:mm:ss');
     }
 
     const createdAt = new Date(result.created_at);
@@ -149,4 +164,10 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct };
+module.exports = {
+  createProduct,
+  getProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+};

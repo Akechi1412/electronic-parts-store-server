@@ -15,7 +15,8 @@ const config = {
     // keepAliveInitialDelay: 0,
   },
   limit: 10,
-  snowFlake: { custom_epoch: Date.now(), instance_id: 1010 },
+  idAlphabet: '0123456789',
+  idLength: 15,
 };
 
 module.exports = config;

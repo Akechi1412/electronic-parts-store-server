@@ -274,37 +274,44 @@ const products = {
       }
 
       if (data.specification) {
-        const specificationList = await connection.query(
+        const [specificationList] = await connection.query(
           `
-          SELECT * FROM specification WHERE product.id = ?
+          SELECT * FROM specification WHERE product_id = ?
         `,
           [params.id]
         );
-        for (const item of specificationList) {
-          await connection.query(`DELETE FROM specification WHERE id = ?`, [item.id]);
-        }
-        for (const item of data.specification) {
+        const oldSpecificationLength = specificationList.length;
+        const newSpecificationLength = data.specification?.length || 0;
+        const itemsToUpdate = Math.min(oldSpecificationLength, newSpecificationLength);
+        for (let i = 0; i < itemsToUpdate; i++) {
           await connection.query(
-            `INSERT INTO specification(product_id, name, value)
-              VALUES(?,?,?)`,
-            [data.id, item.name, item.value]
+            `UPDATE specification SET name=?, value=? WHERE id=? AND product_id=?`,
+            [
+              data.specification[i].name,
+              data.specification[i].value,
+              specificationList[i].id,
+              params.id,
+            ]
           );
         }
+        for (let i = itemsToUpdate; i < newSpecificationLength; i++) {
+          await connection.query(
+            `INSERT INTO specification(product_id, name, value) VALUE(?, ?, ?)`,
+            [params.id, data.specification[i].name, data.specification[i].value]
+          );
+        }
+        for (let i = itemsToUpdate; i < oldSpecificationLength; i++) {
+          await connection.query(`DELETE FROM specification WHERE id = ? AND product_id = ?`, [
+            specificationList[i].id,
+            params.id,
+          ]);
+        }
       }
+
       if (data.product_image) {
-        const productImageList = await connection.query(
-          `
-          SELECT * FROM product_image WHERE product.id = ?
-        `,
-          [params.id]
-        );
-        for (const item of productImageList) {
-          await connection.query(`DELETE FROM product_image WHERE id = ?`, [item.id]);
-        }
-        for (const item of data.product_image) {
-          await connection.query(`INSERT product_image`, [data.id, item.url, item.on_top]);
-        }
+        // TODO
       }
+
       await connection.commit();
       return results;
     } catch (error) {
@@ -316,8 +323,8 @@ const products = {
   },
   delete: async (params) => {
     try {
-      const results = await pool.query(`DELETE FROM product WHERE id = ?`, [params.id]);
-      return results;
+      const [rows, fields] = await pool.query(`DELETE FROM product WHERE id = ?`, [params.id]);
+      return rows;
     } catch (error) {
       throw error;
     }
