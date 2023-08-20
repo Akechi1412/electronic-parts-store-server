@@ -23,7 +23,29 @@ const checkDuplicateCategoryName = async (req, res, next) => {
   next();
 };
 
-const checkValidToDelete = async (req, res, next) => {
+const checkCategoryExistsProduct = async (req, res, next) => {
+  const params = req.params;
+
+  try {
+    const exists = await categoriesModel.checkExistsProduct(params);
+    if (exists) {
+      return res.status(400).json({
+        success: 0,
+        message: 'This category has some products',
+      });
+    }
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
+    });
+  }
+
+  next();
+};
+
+const checkCategoryExistsSubcategory = async (req, res, next) => {
   const params = req.params;
 
   try {
@@ -45,4 +67,8 @@ const checkValidToDelete = async (req, res, next) => {
   next();
 };
 
-module.exports = { checkDuplicateCategoryName, checkValidToDelete };
+module.exports = {
+  checkDuplicateCategoryName,
+  checkCategoryExistsSubcategory,
+  checkCategoryExistsProduct,
+};

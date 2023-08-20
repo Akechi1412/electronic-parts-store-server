@@ -59,6 +59,10 @@ function InitOAuth2Client() {
 }
 
 function toSlug(str) {
+  if (!str?.trim()) {
+    return '';
+  }
+
   str = str.toLowerCase();
   str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   str = str.replace(/[đĐ]/g, 'd');

@@ -2,13 +2,13 @@ require('dotenv').config();
 const { toSlug } = require('../helper');
 const productsModel = require('../models/products.model');
 const config = require('../config');
-const { customAlphabet } = require('nanoid');
+const { customAlphabet } = require('nanoid/async');
 const moment = require('moment');
 
 const createProduct = async (req, res) => {
   const body = req.body;
   const nanoid = customAlphabet(config.idAlphabet, config.idLength);
-  body.id = BigInt(nanoid());
+  body.id = BigInt(await nanoid());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;

@@ -71,6 +71,22 @@ const categories = {
       throw error;
     }
   },
+  getAllWithoutProducts: async () => {
+    try {
+      const [rows, fields] = await pool.query(`
+        SELECT id, parent_id, name
+        FROM category
+        WHERE NOT EXISTS (
+          SELECT id
+          FROM product
+          WHERE product.category_id = category.id
+        );
+      `);
+      return rows;
+    } catch (error) {
+      throw error;
+    }
+  },
   getById: async (params) => {
     try {
       const queryString = `

@@ -21,7 +21,6 @@ const verifyAccessToken = async (req, res, next) => {
     req.userId = decoded.id;
     next();
   } catch (error) {
-    console.log(error.message);
     return res.status(401).json({
       success: 0,
       message: 'Unauthorized!',

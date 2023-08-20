@@ -50,6 +50,22 @@ const getCategories = async (req, res) => {
   }
 };
 
+const getCategoriesWithoutProducts = async (req, res) => {
+  try {
+    const results = await categoriesModel.getAllWithoutProducts();
+    return res.status(200).json({
+      success: 1,
+      data: results,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
+    });
+  }
+};
+
 const getCategoryById = async (req, res) => {
   const params = req.params;
 
@@ -124,4 +140,11 @@ const deleteCategory = async (req, res) => {
   }
 };
 
-module.exports = { createCategory, getCategories, getCategoryById, updateCategory, deleteCategory };
+module.exports = {
+  createCategory,
+  getCategories,
+  getCategoriesWithoutProducts,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+};

@@ -92,7 +92,9 @@ const users = {
   },
   getByEmail: async (data) => {
     try {
-      const [rows, fields] = await pool.query(`SELECT * FROM user WHERE email = ?`, [data.email]);
+      const [rows, fields] = await pool.query(`SELECT * FROM user WHERE email = BINARY ?`, [
+        data.email,
+      ]);
       return rows;
     } catch (error) {
       throw error;
@@ -100,7 +102,7 @@ const users = {
   },
   getByUsername: async (data) => {
     try {
-      const [rows, fields] = await pool.query(`SELECT * FROM user WHERE username = ?`, [
+      const [rows, fields] = await pool.query(`SELECT * FROM user WHERE username = BINARY ?`, [
         data.username,
       ]);
       return rows;

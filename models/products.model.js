@@ -273,7 +273,7 @@ const products = {
         results = { ...rows };
       }
 
-      if (data.specification) {
+      if (data.specification?.length !== 0) {
         const [specificationList] = await connection.query(
           `
           SELECT * FROM specification WHERE product_id = ?
@@ -308,8 +308,39 @@ const products = {
         }
       }
 
-      if (data.product_image) {
-        // TODO
+      if (data.product_image?.length !== 0) {
+        const [productImageList] = await connection.query(
+          `
+          SELECT * FROM product_image WHERE product_id = ?
+        `,
+          [params.id]
+        );
+        const oldProductImageLength = productImageList.length;
+        const newProductImageLength = data.product_image?.length || 0;
+        const itemsToUpdate = Math.min(oldProductImageLength, newProductImageLength);
+        for (let i = 0; i < itemsToUpdate; i++) {
+          await connection.query(
+            `UPDATE product_image SET url=?, on_top=? WHERE id=? AND product_id=?`,
+            [
+              data.product_image[i].url,
+              data.product_image[i].on_top,
+              productImageList[i].id,
+              params.id,
+            ]
+          );
+        }
+        for (let i = itemsToUpdate; i < newProductImageLength; i++) {
+          await connection.query(
+            `INSERT INTO product_image(product_id, url, on_top) VALUE(?, ?, ?)`,
+            [params.id, data.product_image[i].url, data.product_image[i].on_top]
+          );
+        }
+        for (let i = itemsToUpdate; i < oldProductImageLength; i++) {
+          await connection.query(`DELETE FROM product_image WHERE id = ? AND product_id = ?`, [
+            productImageList[i].id,
+            params.id,
+          ]);
+        }
       }
 
       await connection.commit();

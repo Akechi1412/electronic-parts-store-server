@@ -1,7 +1,7 @@
 require('dotenv').config();
 const config = require('../config');
 const usersModel = require('../models/users.model');
-const { customAlphabet } = require('nanoid');
+const { customAlphabet } = require('nanoid/async');
 const { genSalt, hash, compareSync } = require('bcrypt');
 const moment = require('moment');
 const {
@@ -15,7 +15,7 @@ const nodemailer = require('nodemailer');
 const createUser = async (req, res) => {
   const body = req.body;
   const nanoid = customAlphabet(config.idAlphabet, config.idLength);
-  body.id = BigInt(nanoid());
+  body.id = BigInt(await nanoid());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
@@ -43,7 +43,7 @@ const createUser = async (req, res) => {
 const register = async (req, res) => {
   const body = req.body;
   const nanoid = customAlphabet(config.idAlphabet, config.idLength);
-  body.id = BigInt(nanoid());
+  body.id = BigInt(await nanoid());
   const mysqlTimestamp = new Date();
   body.created_at = mysqlTimestamp;
   body.updated_at = mysqlTimestamp;
@@ -175,6 +175,38 @@ const updateUser = async (req, res) => {
   }
 };
 
+const updateUserProfile = async (req, res) => {
+  const body = req.body;
+  const params = { id: req.userId };
+  const [user] = await usersModel.getById(params);
+  body.admin = undefined;
+  const mysqlTimestamp = new Date();
+  body.updated_at = mysqlTimestamp;
+  if (body.password) {
+    const salt = await genSalt(10);
+    body.password = await hash(body.password, salt);
+  }
+  if (user?.admin) {
+    body.verified_email = 1;
+  } else {
+    body.verified_email = 0;
+  }
+
+  try {
+    const results = await usersModel.update(body, params);
+    return res.status(200).json({
+      success: 1,
+      data: results,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
+    });
+  }
+};
+
 const deleteUser = async (req, res) => {
   const params = req.params;
 
@@ -204,7 +236,7 @@ const login = async (req, res) => {
       if (!resultData?.password) {
         return res.status(401).json({
           success: 0,
-          message: 'Invalid email or passowrd',
+          message: 'Invalid email or passoword',
         });
       }
 
@@ -396,6 +428,7 @@ module.exports = {
   getUserById,
   getUserProfile,
   updateUser,
+  updateUserProfile,
   deleteUser,
   login,
   forgotPassword,

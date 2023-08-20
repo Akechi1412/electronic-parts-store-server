@@ -11,6 +11,7 @@ const categoriesRouter = require('./routes/categories.route');
 const brandsRouter = require('./routes/brands.route');
 const productsRouter = require('./routes/products.route');
 const importRouter = require('./routes/imports.route');
+const exportRouter = require('./routes/exports.route');
 
 if (cluster.isPrimary) {
   console.log(`Number of CPUs is ${totalCPUs}`);
@@ -48,6 +49,7 @@ if (cluster.isPrimary) {
   app.use('/api/brands', brandsRouter);
   app.use('/api/products', productsRouter);
   app.use('/api/import', importRouter);
+  app.use('/api/export', exportRouter);
 
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
