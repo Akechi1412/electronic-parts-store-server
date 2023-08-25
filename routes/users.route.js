@@ -10,6 +10,7 @@ const {
   getUserProfile,
   forgotPassword,
   resetPassword,
+  verifyEmail,
 } = require('../controllers/users.controller');
 const router = require('express').Router();
 const { verifyAccessToken, isAdmin, verifyResetPasswordToken } = require('../middlewares/auth');
@@ -26,5 +27,6 @@ router.post('/register', checkDuplicateUsernameOrEmail, register);
 router.post('/login', login);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', verifyResetPasswordToken, resetPassword);
+router.patch('/verify-email/:id', verifyEmail);
 
 module.exports = router;

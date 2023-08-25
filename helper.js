@@ -1,5 +1,6 @@
 const { sign } = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
+const nodemailer = require('nodemailer');
 
 function getOffset(currentPage = 1, limit) {
   return (currentPage - 1) * limit;
@@ -109,6 +110,38 @@ function createFilterQuery(filter, tableName) {
   return '';
 }
 
+async function sendVerifyEmail(email, id) {
+  if (typeof email !== 'string' || email.trim().length === 0) {
+    throw new Error('Email is not found');
+  }
+
+  const myOAuth2Client = InitOAuth2Client();
+  const myAccessTokenObject = await myOAuth2Client.getAccessToken();
+  const myAccessToken = myAccessTokenObject?.token;
+  console.log(myAccessToken);
+  const transport = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: process.env.ADMIN_EMAIL_ADDRESS,
+      clientId: process.env.GOOGLE_MAILER_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_MAILER_CLIENT_SECRET,
+      refresh_token: process.env.GOOGLE_MAILER_REFRESH_TOKEN,
+      accessToken: myAccessToken,
+    },
+  });
+  const url = `${process.env.CLIENT_HOST}/verify-email?id=${id}`;
+  const mailOptions = {
+    to: email,
+    subject: '[ELECTRONIC PARTS STORE] Verify your email',
+    html: `<h3>Xác thực email của bạn</h3>
+        <p>Vui lòng truy cập vào đường dẫn sau và xác thực email để đăng nhập: <a href=${url}>EPS Verify Email</a></p>
+      `,
+  };
+  // Send email
+  await transport.sendMail(mailOptions);
+}
+
 module.exports = {
   getOffset,
   emptyOrRows,
@@ -119,5 +152,6 @@ module.exports = {
   toSlug,
   createUsernameFromEmail,
   createFilterQuery,
+  sendVerifyEmail,
   // generateRefreshToken,
 };

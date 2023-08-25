@@ -50,9 +50,11 @@ const register = async (req, res) => {
   const salt = await genSalt(10);
   body.password = await hash(body.password, salt);
   body.username = createUsernameFromEmail(body.email);
+  body.verified_email = 0;
 
   try {
     const results = await usersModel.createWithoutAdmin(body);
+
     return res.status(200).json({
       success: 1,
       data: results,
@@ -240,6 +242,13 @@ const login = async (req, res) => {
         });
       }
 
+      if (!resultData?.verified_email) {
+        return res.status(400).json({
+          success: 0,
+          message: 'Email has not been verified yet',
+        });
+      }
+
       if (body.role === 'admin' && !resultData?.admin) {
         return res.status(403).json({
           success: 0,
@@ -422,6 +431,50 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const verifyEmail = async (req, res) => {
+  const body = req.body;
+  const mysqlTimestamp = new Date();
+  body.updated_at = mysqlTimestamp;
+  body.verified_email = 1;
+  const params = req.params;
+
+  try {
+    const results = await usersModel.getById(params);
+    if (results.length === 0) {
+      return res.status(400).json({
+        success: 0,
+        message: 'Invalid information',
+      });
+    }
+    if (results[0]?.verified_email) {
+      return res.status(400).json({
+        success: 0,
+        message: 'Email has been verified',
+      });
+    }
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
+    });
+  }
+
+  try {
+    const results = await usersModel.update(body, params);
+    return res.status(200).json({
+      success: 1,
+      data: results,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({
+      success: 0,
+      message: error.message || 'something was wrong',
+    });
+  }
+};
+
 module.exports = {
   createUser,
   getUsers,
@@ -434,4 +487,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   register,
+  verifyEmail,
 };

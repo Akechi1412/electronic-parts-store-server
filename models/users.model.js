@@ -1,5 +1,5 @@
 const { pool } = require('./db');
-const { getOffset, createFilterQuery } = require('../helper');
+const { getOffset, createFilterQuery, sendVerifyEmail } = require('../helper');
 const config = require('../config');
 
 const users = {
@@ -26,13 +26,16 @@ const users = {
     }
   },
   createWithoutAdmin: async (data) => {
+    const connection = await pool.getConnection();
     try {
-      const [rows, fields] = await pool.query(
-        `INSERT INTO user(id, email, username, password, phone, provider, provider_id, created_at, updated_at)
-          VALUES(?,?,?,?,?,?,?,?,?)`,
+      await connection.beginTransaction();
+      const [rows, fields] = await connection.query(
+        `INSERT INTO user(id, email, verified_email, username, password, phone, provider, provider_id, created_at, updated_at)
+          VALUES(?,?,?,?,?,?,?,?,?,?)`,
         [
           data.id,
           data.email,
+          data.verified_email,
           data.username,
           data.password,
           data.phone,
@@ -42,9 +45,17 @@ const users = {
           data.updated_at,
         ]
       );
+
+      await sendVerifyEmail(data.email, data.id);
+
+      await connection.commit();
+
       return rows;
     } catch (error) {
+      await connection.rollback();
       throw error;
+    } finally {
+      connection.release();
     }
   },
   getMultiple: async (query) => {
